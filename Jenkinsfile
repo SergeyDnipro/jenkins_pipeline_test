@@ -1,6 +1,7 @@
 pipeline {
   agent any
 
+  // Make environment variables to use inside pipeline
   environment {
     VENV_DIR = '.venv'
     SHARED_DIR = '/shared'
@@ -27,14 +28,14 @@ pipeline {
           mkdir -p ${SHARED_DIR}/${ALLURE_RESULTS}
           mkdir -p ${SHARED_DIR}/${LOG_DIR}
           . ${VENV_DIR}/bin/activate
-          pytest -v -s --alluredir=${SHARED_DIR}/${ALLURE_RESULTS} | tee ${SHARED_DIR}/${LOG_DIR}/test_output.log
+          pytest -v -s --alluredir=${SHARED_DIR}/${ALLURE_RESULTS}
         '''
       }
     }
 
     stage('Publish Allure Report') {
       steps {
-        // Jenkins needs results inside workspace
+        // Copy Allure results from shared folder to workspace
         sh '''
           mkdir -p ${ALLURE_RESULTS}
           cp -r ${SHARED_DIR}/${ALLURE_RESULTS}/* ${ALLURE_RESULTS}/
@@ -51,7 +52,7 @@ pipeline {
 
   post {
     always {
-      // Also copy logs back to Jenkins workspace so they are archived
+      // Copy logs to workspace to archive artifacts
       sh '''
         mkdir -p logs
         cp -r ${SHARED_DIR}/${LOG_DIR}/* logs/ || true
